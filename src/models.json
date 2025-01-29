@@ -1,0 +1,15 @@
+[
+    {
+        "Model": "Kosmos-2",
+        "RefCOCO val acc": 52.32,
+        "RefCOCO+ val acc": 50.73,
+        "RefCOCOg val acc": 60.57,
+        "meta": {
+            "task_type": "prompt-based object detection",
+            "model_name": "Kosmos-2",
+            "model_files": {
+                "checkpoint": "/weights/kosmos-2-patch14-224"
+            }
+        }
+    }
+]

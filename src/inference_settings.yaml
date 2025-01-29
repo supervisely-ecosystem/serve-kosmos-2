@@ -1,0 +1,2 @@
+text_prompt: "<grounding> An image of"
+max_new_tokens: 128
