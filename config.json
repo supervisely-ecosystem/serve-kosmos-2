@@ -10,6 +10,9 @@
         "serve"
     ],
     "gpu": "required",
+    "icon": "https://github.com/supervisely-ecosystem/serve-kosmos-2/releases/download/v0.0.1/kosmos_2_icon.png",
+    "icon_cover": true,
+    "poster": "https://github.com/supervisely-ecosystem/serve-kosmos-2/releases/download/v0.0.1/kosmos_2.png",
     "session_tags": [
         "deployed_nn"
     ],
