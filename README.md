@@ -34,7 +34,7 @@ method. Different from previous MLLMs, which can only provide text output, KOSMO
 
 **Step 2.** Wait for the model to deploy
 
-![deployed](https://github.com/supervisely-ecosystem/serve-kosmos-2/releases/download/v0.0.1/kosmos_2_deploy.png)
+![deployed](https://github.com/supervisely-ecosystem/serve-kosmos-2/releases/download/v0.0.1/kosmos_2_deploy_2.png)
 
 # Acknowledgment
 
