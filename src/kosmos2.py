@@ -73,6 +73,42 @@ class Kosmos2(sly.nn.inference.PromptBasedObjectDetection):
         generated_text = self.processor.batch_decode(
             generated_ids, skip_special_tokens=True
         )[0]
+        predictions = self.postprocess_generated_text(generated_text, image)
+        return predictions
+
+    def predict_batch(self, images_np, settings):
+        text_prompt = settings.get("text_prompt", "<grounding> An image of")
+        if not text_prompt.startswith("<grounding>"):
+            text_prompt = "<grounding> " + text_prompt
+        max_new_tokens = int(settings.get("max_new_tokens", 128))
+
+        images = [Image.fromarray(img) for img in images_np]
+        text_prompt = [text_prompt] * len(images)
+
+        inputs = self.processor(
+            text=text_prompt, images=images, return_tensors="pt"
+        ).to(self.device)
+
+        generated_ids = self.model.generate(
+            pixel_values=inputs["pixel_values"],
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            image_embeds=None,
+            image_embeds_position_mask=inputs["image_embeds_position_mask"],
+            use_cache=True,
+            max_new_tokens=64,
+        )
+        generated_texts = self.processor.batch_decode(
+            generated_ids, skip_special_tokens=True
+        )
+        batch_predictions = []
+        for generated_text, image in zip(generated_texts, images):
+            batch_predictions.append(
+                self.postprocess_generated_text(generated_text, image)
+            )
+        return batch_predictions
+
+    def postprocess_generated_text(self, generated_text, image):
         caption, entities = self.processor.post_process_generation(generated_text)
         predictions = []
         for entity in entities:
