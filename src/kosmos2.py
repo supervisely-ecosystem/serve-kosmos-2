@@ -10,6 +10,9 @@ from supervisely.nn.inference.inference import (
 )
 from PIL import Image
 from supervisely.nn.prediction_dto import PredictionBBox
+from fastapi import Request
+import base64
+from io import BytesIO
 
 
 class Kosmos2(sly.nn.inference.PromptBasedObjectDetection):
@@ -171,3 +174,58 @@ class Kosmos2(sly.nn.inference.PromptBasedObjectDetection):
             tags.append(sly.Tag(self._get_confidence_tag_meta(), dto.score))
         label = sly.Label(geometry, obj_class, tags)
         return label
+
+    def serve(self):
+        super().serve()
+        server = self._app.get_server()
+
+        @server.post("/visual_question_answering")
+        def visual_question_answering(request: Request):
+            api = request.state.api
+            state = request.state.state
+            if "image_id" in state:
+                image_id = state["image_id"]
+                image_np = api.image.download_np(image_id)
+                image_pil = Image.fromarray(image_np)
+            elif "image_path" in state:
+                image_pil = Image.open(state["image_path"])
+            elif "image_encoding" in state:
+                image_data = base64.b64decode(state["image_encoding"])
+                image_pil = Image.open(BytesIO(image_data))
+            else:
+                raise ValueError(
+                    "Request must contain either image_id, image_path or image_encoding!"
+                )
+
+            text_prompt = state["text_prompt"]
+
+            if not text_prompt.startswith("<grounding>"):
+                text_prompt = "<grounding> " + text_prompt
+
+            inputs = self.processor(
+                text=text_prompt, images=image_pil, return_tensors="pt"
+            ).to(self.device)
+            generated_ids = self.model.generate(
+                pixel_values=inputs["pixel_values"],
+                input_ids=inputs["input_ids"],
+                attention_mask=inputs["attention_mask"],
+                image_embeds=None,
+                image_embeds_position_mask=inputs["image_embeds_position_mask"],
+                use_cache=True,
+                max_new_tokens=128,
+            )
+            generated_text = self.processor.batch_decode(
+                generated_ids, skip_special_tokens=True
+            )[0]
+            caption, entities = self.processor.post_process_generation(generated_text)
+            return {"answer": caption}
+
+        @server.post("/get_prompt_instructions")
+        def get_prompt_instructions(request: Request):
+            instructions = (
+                "Examples of prompts for Kosmos 2 caption generation: for brief caption - 'An image of', "
+                "for detailed caption - 'Describe this image in detail:'. Examples of prompts for Kosmos 2"
+                " visual question answering - 'Question: What is special about this image? Answer:', "
+                "'Question: How many objects can you see on this image? Answer:'."
+            )
+            return {"instructions": instructions}
