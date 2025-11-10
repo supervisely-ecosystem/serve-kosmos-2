@@ -16,7 +16,7 @@ from io import BytesIO
 
 
 class Kosmos2(sly.nn.inference.PromptBasedObjectDetection):
-    FRAMEWORK_NAME = "Kosmos 2"
+    FRAMEWORK_NAME = "Kosmos-2"
     MODELS = "src/models.json"
     APP_OPTIONS = "src/app_options.yaml"
     INFERENCE_SETTINGS = "src/inference_settings.yaml"
